@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Hijau: Campur yang Ramah</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #a8e6cf, #dcedc1);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 300px 1fr;
+            gap: 20px;
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        .ingredients-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .ingredients-panel h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+        .ingredient {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: grab;
+            border: 2px solid;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+        }
+
+        .ingredient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .ingredient.green {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        }
+
+        .ingredient.harmful {
+            border-color: #dc3545;
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        }
+
+        .ingredient.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .mixing-area {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-radius: 20px;
+            border: 3px dashed #2196f3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .mixing-area.drag-over {
+            background: linear-gradient(135deg, #c8e6c9, #a5d6a7);
+            border-color: #4caf50;
+            transform: scale(1.02);
+        }
+
+        .beaker {
+            width: 120px;
+            height: 150px;
+            background: linear-gradient(to bottom, transparent 20%, #e1f5fe 20%);
+            border: 4px solid #0277bd;
+            border-radius: 0 0 60px 60px;
+            position: relative;
+            margin: 20px;
+        }
+
+        .beaker::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -20px;
+            right: -20px;
+            height: 20px;
+            background: #0277bd;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .mixed-ingredients {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px;
+            min-height: 60px;
+            width: 90%;
+            border: 2px solid #ddd;
+        }
+
+        .product-area {
+            background: #fff3e0;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px dashed #ff9800;
+        }
+
+        .product-area h3 {
+            color: #e65100;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .product-option {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            border: 2px solid #ff9800;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .product-option:hover {
+            background: #fff3e0;
+            transform: translateY(-2px);
+        }
+
+        .product-option.selected {
+            background: #ff9800;
+            color: white;
+        }
+
+        .controls {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .result-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            text-align: center;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .score {
+            font-size: 3em;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .score.excellent { color: #28a745; }
+        .score.good { color: #ffc107; }
+        .score.poor { color: #dc3545; }
+
+        .principles {
+            text-align: left;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .principle {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .principle.met {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .principle.not-met {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Lab Hijau: Campur yang Ramah 🌱</h1>
+            <p>Pelajari kimia hijau sambil membuat produk ramah lingkungan!</p>
+        </div>
+
+        <div class="game-area">
+            <div class="ingredients-panel">
+                <h3>🧪 Bahan Kimia</h3>
+                <div id="ingredients"></div>
+            </div>
+
+            <div class="mixing-area" id="mixingArea">
+                <div class="beaker"></div>
+                <div class="mixed-ingredients" id="mixedIngredients">
+                    <p style="color: #666; text-align: center; font-style: italic;">
+                        Seret bahan ke sini untuk mencampur
+                    </p>
+                </div>
+            </div>
+
+            <div class="product-area">
+                <h3>🎯 Pilih Produk Target</h3>
+                <div id="products"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="mixBtn" disabled>🧪 Campur Bahan</button>
+            <button class="btn" id="resetBtn">🔄 Mulai Ulang</button>
+        </div>
+    </div>
+
+    <div class="result-modal" id="resultModal">
+        <div class="result-content">
+            <h2 id="resultTitle"></h2>
+            <div class="score" id="resultScore"></div>
+            <div class="principles" id="resultPrinciples"></div>
+            <button class="btn" onclick="closeResult()">Lanjutkan</button>
+        </div>
+    </div>
+
+    <script>
+        const ingredients = [
+            { id: 'coconut_oil', name: 'Minyak Kelapa', type: 'green', description: 'Bahan alami terbarukan' },
+            { id: 'palm_oil', name: 'Minyak Sawit', type: 'harmful', description: 'Dapat merusak lingkungan' },
+            { id: 'sodium_hydroxide', name: 'Natrium Hidroksida', type: 'harmful', description: 'Bersifat korosif' },
+            { id: 'potassium_hydroxide', name: 'Kalium Hidroksida', type: 'green', description: 'Lebih aman untuk lingkungan' },
+            { id: 'synthetic_fragrance', name: 'Pewangi Sintetis', type: 'harmful', description: 'Mengandung bahan kimia berbahaya' },
+            { id: 'essential_oil', name: 'Minyak Esensial', type: 'green', description: 'Pewangi alami' },
+            { id: 'petroleum_glycerin', name: 'Gliserin Petroleum', type: 'harmful', description: 'Dari bahan fosil' },
+            { id: 'vegetable_glycerin', name: 'Gliserin Nabati', type: 'green', description: 'Dari tumbuhan' },
+            { id: 'formaldehyde', name: 'Formaldehida', type: 'harmful', description: 'Karsinogen' },
+            { id: 'vitamin_e', name: 'Vitamin E', type: 'green', description: 'Antioksidan alami' }
+        ];
+
+        const products = [
+            { 
+                id: 'soap', 
+                name: '🧼 Sabun', 
+                required: ['coconut_oil', 'potassium_hydroxide', 'essential_oil', 'vegetable_glycerin'],
+                principles: [
+                    'Menggunakan bahan terbarukan',
+                    'Menghindari zat beracun',
+                    'Proses ramah lingkungan',
+                    'Biodegradable'
+                ]
+            },
+            { 
+                id: 'plastic', 
+                name: '♻️ Plastik Bio', 
+                required: ['vegetable_glycerin', 'essential_oil', 'vitamin_e'],
+                principles: [
+                    'Bahan baku terbarukan',
+                    'Dapat terurai',
+                    'Mengurangi limbah',
+                    'Non-toksik'
+                ]
+            },
+            { 
+                id: 'pesticide', 
+                name: '🌿 Pestisida Alami', 
+                required: ['essential_oil', 'coconut_oil', 'vitamin_e'],
+                principles: [
+                    'Tidak merusak ekosistem',
+                    'Bahan alami',
+                    'Aman untuk manusia',
+                    'Mudah terurai'
+                ]
+            }
+        ];
+
+        let selectedIngredients = [];
+        let selectedProduct = null;
+
+        function initGame() {
+            renderIngredients();
+            renderProducts();
+            setupDragAndDrop();
+        }
+
+        function renderIngredients() {
+            const container = document.getElementById('ingredients');
+            container.innerHTML = ingredients.map(ingredient => `
+                <div class="ingredient ${ingredient.type}" draggable="true" data-id="${ingredient.id}">
+                    <strong>${ingredient.name}</strong>
+                    <div style="font-size: 0.8em; margin-top: 5px; opacity: 0.8;">
+                        ${ingredient.description}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('products');
+            container.innerHTML = products.map(product => `
+                <div class="product-option" data-id="${product.id}">
+                    ${product.name}
+                </div>
+            `).join('');
+
+            container.addEventListener('click', (e) => {
+                if (e.target.classList.contains('product-option')) {
+                    document.querySelectorAll('.product-option').forEach(p => p.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                    selectedProduct = e.target.dataset.id;
+                    updateMixButton();
+                }
+            });
+        }
+
+        function setupDragAndDrop() {
+            const mixingArea = document.getElementById('mixingArea');
+            const ingredientElements = document.querySelectorAll('.ingredient');
+
+            ingredientElements.forEach(ingredient => {
+                ingredient.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', e.target.dataset.id);
+                    e.target.classList.add('dragging');
+                });
+
+                ingredient.addEventListener('dragend', (e) => {
+                    e.target.classList.remove('dragging');
+                });
+            });
+
+            mixingArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                mixingArea.classList.add('drag-over');
+            });
+
+            mixingArea.addEventListener('dragleave', (e) => {
+                mixingArea.classList.remove('drag-over');
+            });
+
+            mixingArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                mixingArea.classList.remove('drag-over');
+                
+                const ingredientId = e.dataTransfer.getData('text/plain');
+                const ingredient = ingredients.find(i => i.id === ingredientId);
+                
+                if (ingredient && !selectedIngredients.find(i => i.id === ingredientId)) {
+                    selectedIngredients.push(ingredient);
+                    updateMixedIngredients();
+                    updateMixButton();
+                }
+            });
+        }
+
+        function updateMixedIngredients() {
+            const container = document.getElementById('mixedIngredients');
+            
+            if (selectedIngredients.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; font-style: italic;">Seret bahan ke sini untuk mencampur</p>';
+            } else {
+                container.innerHTML = selectedIngredients.map(ingredient => `
+                    <div style="display: inline-block; margin: 5px; padding: 8px 12px; background: ${ingredient.type === 'green' ? '#d4edda' : '#f8d7da'}; border-radius: 15px; font-size: 0.9em;">
+                        ${ingredient.name}
+                        <span onclick="removeIngredient('${ingredient.id}')" style="margin-left: 8px; cursor: pointer; color: #666;">×</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function removeIngredient(ingredientId) {
+            selectedIngredients = selectedIngredients.filter(i => i.id !== ingredientId);
+            updateMixedIngredients();
+            updateMixButton();
+        }
+
+        function updateMixButton() {
+            const btn = document.getElementById('mixBtn');
+            btn.disabled = selectedIngredients.length === 0 || !selectedProduct;
+        }
+
+        function mixIngredients() {
+            const product = products.find(p => p.id === selectedProduct);
+            const greenCount = selectedIngredients.filter(i => i.type === 'green').length;
+            const harmfulCount = selectedIngredients.filter(i => i.type === 'harmful').length;
+            const requiredMet = product.required.filter(req => 
+                selectedIngredients.some(ing => ing.id === req)
+            ).length;
+            
+            let score = 0;
+            let level = 'poor';
+            let title = '';
+            
+            // Hitung skor berdasarkan prinsip kimia hijau
+            if (harmfulCount === 0 && greenCount >= 3 && requiredMet >= 3) {
+                score = 100;
+                level = 'excellent';
+                title = '🏆 Sempurna! Ahli Kimia Hijau!';
+            } else if (harmfulCount <= 1 && greenCount >= 2 && requiredMet >= 2) {
+                score = 75;
+                level = 'good';
+                title = '👍 Bagus! Hampir Sempurna!';
+            } else if (requiredMet >= 1) {
+                score = 50;
+                level = 'good';
+                title = '📚 Lumayan! Perlu Belajar Lagi!';
+            } else {
+                score = 25;
+                level = 'poor';
+                title = '💡 Coba Lagi! Pelajari Prinsip Kimia Hijau!';
+            }
+
+            showResult(title, score, level, product, greenCount, harmfulCount, requiredMet);
+        }
+
+        function showResult(title, score, level, product, greenCount, harmfulCount, requiredMet) {
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('resultScore').textContent = score + '%';
+            document.getElementById('resultScore').className = `score ${level}`;
+            
+            const principlesHtml = `
+                <h4>Evaluasi Prinsip Kimia Hijau:</h4>
+                <div class="principle ${harmfulCount === 0 ? 'met' : 'not-met'}">
+                    ${harmfulCount === 0 ? '✅' : '❌'} Menghindari zat beracun (${harmfulCount} bahan berbahaya)
+                </div>
+                <div class="principle ${greenCount >= 3 ? 'met' : 'not-met'}">
+                    ${greenCount >= 3 ? '✅' : '❌'} Menggunakan bahan terbarukan (${greenCount} bahan hijau)
+                </div>
+                <div class="principle ${requiredMet >= 3 ? 'met' : 'not-met'}">
+                    ${requiredMet >= 3 ? '✅' : '❌'} Formula produk sesuai (${requiredMet}/${product.required.length} bahan tepat)
+                </div>
+                <div class="principle ${selectedIngredients.length <= 5 ? 'met' : 'not-met'}">
+                    ${selectedIngredients.length <= 5 ? '✅' : '❌'} Efisiensi bahan (${selectedIngredients.length} bahan digunakan)
+                </div>
+            `;
+            
+            document.getElementById('resultPrinciples').innerHTML = principlesHtml;
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+
+        function closeResult() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        function resetGame() {
+            selectedIngredients = [];
+            selectedProduct = null;
+            updateMixedIngredients();
+            document.querySelectorAll('.product-option').forEach(p => p.classList.remove('selected'));
+            updateMixButton();
+        }
+
+        // Event listeners
+        document.getElementById('mixBtn').addEventListener('click', mixIngredients);
+        document.getElementById('resetBtn').addEventListener('click', resetGame);
+
+        // Initialize game
+        initGame();
+    </script>
+    <!-- Popup Instruksi Rules -->
+<div id="rulesPopup" style="
+position: fixed; top:0; left:0; width:100%; height:100%;
+background: rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center;
+z-index: 9999; padding: 1rem; box-sizing: border-box;">
+<div style="
+    background: white; border-radius: 10px; max-width: 500px; width: 100%;
+    padding: 1.5rem; text-align: left; max-height: 80vh; overflow-y: auto; font-family: 'Segoe UI', sans-serif;">
+    <h2>Aturan Main Game Edukasi Kimia Hijau</h2>
+    <ol>
+        <li><b>Buka website</b>, lihat tiga bagian utama: Bahan Baku, Produk, dan Area Pencampuran.</li>
+        <li><b>Pilih produk</b> yang ingin dibuat dengan klik pada daftar produk.</li>
+        <li><b>Seret bahan baku</b> dari daftar bahan ke area pencampuran.</li>
+        <li><b>Klik "Campur Bahan"</b> untuk mendapatkan hasil penilaian.</li>
+        <li><b>Lihat hasil</b> berupa skor dan prinsip kimia hijau yang terpenuhi.</li>
+        <li><b>Coba ulang</b> sampai 3 kali dengan tombol "Reset".</li>
+        <li>Pelajari prinsip kimia hijau untuk hasil terbaik.</li>
+    </ol>
+    <div style="text-align:center; margin-top:1rem;">
+        <button id="closeRulesBtn" style="
+            padding: 0.5rem 1.5rem; background-color: #00796b; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Mulai Main
+        </button>
+    </div>
+</div>
+</div>
+
+<script>
+document.getElementById('closeRulesBtn').addEventListener('click', () => {
+    document.getElementById('rulesPopup').style.display = 'none';
+});
+</script>
+</body>
+</html>
